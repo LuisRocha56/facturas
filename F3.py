@@ -1,8 +1,12 @@
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 import xml.etree.ElementTree as ET
 import pandas as pd
+import logging
+
+# Configuración de registro
+logging.basicConfig(filename='procesamiento_facturas.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Variable global para almacenar archivos procesados y ruta del archivo Excel
 archivos_procesados = set()
@@ -42,6 +46,11 @@ def procesar_facturas():
 
     errores = []
     archivos_a_procesar = lista_archivos.get(0, tk.END)
+    
+    # Crear barra de progreso
+    progress_bar['maximum'] = len(archivos_a_procesar)
+    progress_bar['value'] = 0
+    
     for archivo in archivos_a_procesar:
         try:
             tree = ET.parse(archivo)
@@ -81,8 +90,17 @@ def procesar_facturas():
             ])
 
             subtotal = float(root.get("SubTotal") or root.get("subTotal") or 0)
-            iva_element = root.find(".//cfdi:Impuestos/cfdi:Traslados/cfdi:Traslado", namespaces={"cfdi": "http://www.sat.gob.mx/cfd/4"})
-            iva = float(iva_element.get("Importe") if iva_element is not None else 0)
+            
+            # Extracción del IVA
+            iva = 0.0
+            try:
+                iva_element = root.find(".//cfdi:Impuestos/cfdi:Traslados/cfdi:Traslado", namespaces={"cfdi": "http://www.sat.gob.mx/cfd/4"})
+                if iva_element is not None:
+                    iva = float(iva_element.get("Importe", 0))
+            except Exception as e:
+                logging.error(f"Error al extraer el IVA de {archivo}: {str(e)}")
+                iva = 0.0  # Valor por defecto si hay un error
+            
             total = float(root.get("Total") or root.get("total") or 0)
 
             nuevo_df = pd.DataFrame({
@@ -100,6 +118,10 @@ def procesar_facturas():
 
         except Exception as e:
             errores.append(f"Error procesando {archivo}: {str(e)}")
+            logging.error(f"Error procesando {archivo}: {str(e)}")
+
+        # Actualizar la barra de progreso
+        progress_bar['value'] += 1
 
     # Añadir la columna "Suma de Totales"
     df["Suma de Totales"] = df["Total"].sum()
@@ -114,6 +136,7 @@ def procesar_facturas():
             messagebox.showinfo("Éxito", "Facturas procesadas y datos guardados en Excel.")
         except Exception as e:
             errores.append(f"Error al guardar el archivo Excel: {str(e)}")
+            logging.error(f"Error al guardar el archivo Excel: {str(e)}")
 
     lista_archivos.delete(0, tk.END)
 
@@ -122,10 +145,16 @@ def procesar_facturas():
         mensaje_errores = "\n".join(errores)
         messagebox.showwarning("Procesado con advertencias", f"Ocurrieron algunos errores:\n{mensaje_errores}")
 
+# Función para eliminar archivos procesados de la lista
+def eliminar_archivos():
+    seleccionados = lista_archivos.curselection()
+    for i in reversed(seleccionados):
+        lista_archivos.delete(i)
+
 # Configuración de la interfaz gráfica
 ventana = tk.Tk()
 ventana.title("Procesador de Facturas XML")
-ventana.geometry("600x400")
+ventana.geometry("600x500")
 
 boton_guardar = tk.Button(ventana, text="Elegir Guardar Excel", command=elegir_guardar_excel)
 boton_guardar.pack(pady=10)
@@ -136,10 +165,17 @@ boton_elegir.pack(pady=10)
 boton_procesar = tk.Button(ventana, text="Procesar Facturas", command=procesar_facturas)
 boton_procesar.pack(pady=10)
 
+boton_eliminar = tk.Button(ventana, text="Eliminar Archivos Seleccionados", command=eliminar_archivos)
+boton_eliminar.pack(pady=10)
+
 label_ruta_excel = tk.Label(ventana, text="Ruta del archivo Excel no seleccionada")
 label_ruta_excel.pack(pady=10)
 
 lista_archivos = tk.Listbox(ventana, selectmode=tk.MULTIPLE)
-lista_archivos.pack(pady=10)
+lista_archivos.pack(pady=10, fill=tk.BOTH, expand=True)
+
+# Barra de progreso
+progress_bar = ttk.Progressbar(ventana, orient="horizontal", length=400, mode="determinate")
+progress_bar.pack(pady=10)
 
 ventana.mainloop()

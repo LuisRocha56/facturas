@@ -145,11 +145,22 @@ def procesar_facturas():
         mensaje_errores = "\n".join(errores)
         messagebox.showwarning("Procesado con advertencias", f"Ocurrieron algunos errores:\n{mensaje_errores}")
 
-# Función para eliminar archivos procesados de la lista
-def eliminar_archivos():
-    seleccionados = lista_archivos.curselection()
-    for i in reversed(seleccionados):
-        lista_archivos.delete(i)
+# Función para mostrar la ayuda
+def mostrar_ayuda():
+    ayuda_texto = (
+        "Manual de Usuario\n\n"
+        "Este programa permite procesar archivos XML de facturas.\n\n"
+        "1. Elegir Guardar Excel:\n"
+        "   Seleccione la ubicación y nombre del archivo Excel donde se guardarán los datos.\n\n"
+        "2. Elegir Facturas:\n"
+        "   Seleccione uno o más archivos XML que desee procesar.\n\n"
+        "3. Procesar Facturas:\n"
+        "   Este botón procesará los archivos XML seleccionados y los datos se guardarán en el archivo Excel elegido.\n\n"
+        "Notas:\n"
+        "- Asegúrese de que los archivos XML estén en el formato correcto.\n"
+        "- El programa generará un registro de errores en caso de problemas durante el procesamiento."
+    )
+    messagebox.showinfo("Ayuda", ayuda_texto)
 
 # Configuración de la interfaz gráfica
 ventana = tk.Tk()
@@ -165,8 +176,8 @@ boton_elegir.pack(pady=10)
 boton_procesar = tk.Button(ventana, text="Procesar Facturas", command=procesar_facturas)
 boton_procesar.pack(pady=10)
 
-boton_eliminar = tk.Button(ventana, text="Eliminar Archivos Seleccionados", command=eliminar_archivos)
-boton_eliminar.pack(pady=10)
+boton_ayuda = tk.Button(ventana, text="Ayuda", command=mostrar_ayuda)
+boton_ayuda.pack(pady=10)
 
 label_ruta_excel = tk.Label(ventana, text="Ruta del archivo Excel no seleccionada")
 label_ruta_excel.pack(pady=10)

@@ -34,6 +34,7 @@ def procesar_facturas():
         messagebox.showwarning("Advertencia", "Por favor, elija archivos XML primero.")
         return
 
+    # Cargar datos existentes si el archivo ya existe o crear nuevo DataFrame
     if os.path.exists(ruta_excel):
         df = pd.read_excel(ruta_excel)
     else:
@@ -99,6 +100,12 @@ def procesar_facturas():
 
         except Exception as e:
             errores.append(f"Error procesando {archivo}: {str(e)}")
+
+    # Añadir la columna "Suma de Totales"
+    df["Suma de Totales"] = df["Total"].sum()
+
+    # Ordenar el DataFrame por la columna "Fecha" de la más actual a la más antigua
+    df = df.sort_values(by="Fecha", ascending=False)
 
     # Guardar los datos en el archivo Excel
     if not df.empty:

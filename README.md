@@ -1,4 +1,5 @@
 Descripción
+
 Este proyecto permite procesar facturas en formato PDF y extraer automáticamente información relevante de cada documento.
 Los datos obtenidos se almacenan en un archivo de Excel, facilitando la organización y el análisis de múltiples facturas en un solo lugar.
 ________________________________________
